@@ -1,0 +1,191 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String          @id @default(auto()) @map("_id") @db.ObjectId
+  name          String?
+  email         String?         @unique
+  upiId         String?
+  bankAccountNumber String?
+  ifscCode      String?
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          String          @default("MEMBER") // "ADMIN" | "MEMBER"
+  
+  accounts      Account[]
+  sessions      Session[]
+  
+  groupMemberships GroupMember[]
+  expensesPaid     Expense[]       @relation("PaidBy")
+  settlementsSent     Settlement[] @relation("SettlementFrom")
+  settlementsReceived Settlement[] @relation("SettlementTo")
+  activityLogs     ActivityLog[]
+  notifications    Notification[]
+  balancesA        Balance[]       @relation("BalanceA")
+  balancesB        Balance[]       @relation("BalanceB")
+
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  type      String   // "EXPENSE", "SETTLE", "GROUP"
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model Group {
+  id          String        @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String?
+  image       String?
+  adminId     String        @db.ObjectId
+  
+  inviteCode  String?       @unique
+  
+  members      GroupMember[]
+  invitations  Invitation[]
+  expenses     Expense[]
+  settlements  Settlement[]
+  balances     Balance[]
+  activityLogs ActivityLog[]
+  
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model Invitation {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String
+  groupId   String   @db.ObjectId
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  invitedBy String   @db.ObjectId
+  createdAt DateTime @default(now())
+
+  @@unique([email, groupId])
+}
+
+model GroupMember {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  userId  String @db.ObjectId
+  groupId String @db.ObjectId
+  role    String @default("MEMBER") // "ADMIN" | "MEMBER"
+
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, groupId])
+}
+
+model Expense {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  amount      Float
+  description String
+  category    String   @default("Other")
+  date        DateTime @default(now())
+  
+  groupId     String   @db.ObjectId
+  paidById    String   @db.ObjectId
+  
+  splits      Json     // [{ userId: string, amount: number }]
+  
+  group       Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  paidBy      User     @relation("PaidBy", fields: [paidById], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Balance {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  groupId   String @db.ObjectId
+  userAId   String @db.ObjectId
+  userBId   String @db.ObjectId
+  amount    Float  // Net amount userA owes userB (positive: A owes B, negative: B owes A)
+
+  group     Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userA     User   @relation("BalanceA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB     User   @relation("BalanceB", fields: [userBId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userAId, userBId])
+}
+
+model Settlement {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  amount    Float
+  status    String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  date      DateTime @default(now())
+  
+  groupId    String   @db.ObjectId
+  fromUserId String   @db.ObjectId
+  toUserId   String   @db.ObjectId
+
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  fromUser  User     @relation("SettlementFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser    User     @relation("SettlementTo", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
+
+model ActivityLog {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  groupId   String   @db.ObjectId
+  userId    String   @db.ObjectId
+  action    String   // "ADD_EXPENSE", "UPDATE_EXPENSE", "DELETE_EXPENSE", "SETTLE", "CREATE_GROUP", "ADD_MEMBER"
+  metadata  Json
+  
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+}
+
+// NextAuth models
+model Account {
+  id                 String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId             String  @db.ObjectId
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String? @db.String
+  access_token       String? @db.String
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String? @db.String
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  sessionToken String   @unique
+  userId       String   @db.ObjectId
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
