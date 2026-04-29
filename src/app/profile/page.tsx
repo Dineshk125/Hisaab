@@ -20,7 +20,7 @@ export default async function ProfilePage() {
   if (!user) redirect("/login");
 
   return (
-    <div className="min-h-screen bg-background pb-32 md:pb-10">
+    <div className="min-h-screen bg-background pb-44 md:pb-20">
       <div className="container mx-auto py-8 md:py-12 px-4 space-y-8 max-w-2xl">
         <div className="flex flex-col items-center text-center space-y-4 pt-10">
           <Avatar className="h-32 w-32 border-4 border-orange-500/20 shadow-2xl">
