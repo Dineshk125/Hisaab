@@ -150,11 +150,11 @@ export default async function LandingPage() {
 
         {/* Call to Action */}
         <section className="w-full py-32 border-t border-white/5 bg-zinc-950/50">
-          <div className="container px-4 text-center space-y-8">
-            <h2 className="text-5xl md:text-7xl font-black tracking-tighter">READY TO <span className="text-orange-500">HISAAB?</span></h2>
-            <p className="text-zinc-500 text-xl max-w-xl mx-auto">Join thousands of users managing their finances with clarity and style.</p>
-            <Link href="/login">
-              <Button size="lg" className="h-20 px-16 text-xl font-black rounded-3xl bg-orange-500 text-white hover:bg-orange-600 transition-all uppercase tracking-widest shadow-[0_20px_50px_rgba(249,115,22,0.3)]">
+          <div className="max-w-4xl mx-auto px-4 flex flex-col items-center text-center space-y-8">
+            <h2 className="text-4xl md:text-7xl font-black tracking-tighter">READY TO <span className="text-orange-500">HISAAB?</span></h2>
+            <p className="text-zinc-500 text-lg md:text-xl max-w-xl mx-auto leading-relaxed">Join thousands of users managing their finances with clarity and style.</p>
+            <Link href="/login" className="w-full sm:w-auto flex justify-center">
+              <Button size="lg" className="h-16 md:h-20 w-full sm:w-auto px-8 md:px-16 text-base md:text-xl font-black rounded-3xl bg-orange-500 text-white hover:bg-orange-600 transition-all uppercase tracking-widest shadow-[0_20px_50px_rgba(249,115,22,0.3)]">
                 Create Free Account
               </Button>
             </Link>
