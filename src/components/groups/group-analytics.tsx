@@ -41,14 +41,25 @@ export function GroupAnalytics({ expenses, groupId }: { expenses: any[]; groupId
     return acc;
   }, []);
 
-  // Create a 14-day continuous timeline
-  const timelineData = Array.from({ length: 14 }).map((_, i) => {
-    const date = new Date();
-    date.setDate(date.getDate() - (13 - i));
+  // Find the date range dynamically to cover all expense dates
+  const dates = expenses.map(exp => new Date(exp.date).getTime());
+  const minDate = dates.length > 0 ? Math.min(...dates) : new Date().setDate(new Date().getDate() - 13);
+  const maxDate = dates.length > 0 ? Math.max(...dates) : new Date().getTime();
+
+  // Limit date range to a sensible maximum of 90 days to avoid cluttering the chart
+  const daysDiff = Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24)) + 1;
+  const totalDays = Math.min(90, Math.max(14, daysDiff));
+
+  const startTimelineDate = new Date(maxDate);
+  startTimelineDate.setDate(startTimelineDate.getDate() - (totalDays - 1));
+
+  const timelineData = Array.from({ length: totalDays }).map((_, i) => {
+    const date = new Date(startTimelineDate);
+    date.setDate(date.getDate() + i);
     const dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
     
     const dailyExpenses = expenses.filter(exp => 
-      new Date(exp.createdAt).toLocaleDateString() === date.toLocaleDateString()
+      new Date(exp.date).toLocaleDateString() === date.toLocaleDateString()
     );
     
     const amount = dailyExpenses.reduce((sum, exp) => sum + exp.amount, 0);
