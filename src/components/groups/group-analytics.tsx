@@ -86,7 +86,7 @@ export function GroupAnalytics({ expenses, groupId }: { expenses: any[]; groupId
               </CardTitle>
             </CardHeader>
             <CardContent className="h-[450px] w-full pt-0">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                 <PieChart>
                   <Pie
                     data={categoryData}
@@ -137,7 +137,7 @@ export function GroupAnalytics({ expenses, groupId }: { expenses: any[]; groupId
               <CardTitle className="text-lg font-black tracking-tight">Spending Velocity & Trend</CardTitle>
             </CardHeader>
             <CardContent className="h-[450px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                 <ComposedChart data={enrichedTimelineData} margin={{ top: 30, right: 10, left: 0, bottom: 20 }}>
                   <defs>
                     <linearGradient id="colorCum" x1="0" y1="0" x2="0" y2="1">
