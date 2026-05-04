@@ -14,6 +14,7 @@ export const metadata: Metadata = {
   description: "Split bills, settle debts, and gain AI-powered insights with Hisaab. The most premium way to manage shared finances.",
   icons: {
     icon: "/icons/icon-512x512.png",
+    shortcut: "/icons/icon-512x512.png",
     apple: "/icons/icon-512x512.png",
   },
 };
