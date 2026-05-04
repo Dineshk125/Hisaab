@@ -53,18 +53,18 @@ export function ExpenseList({
               <div className="w-1.5 md:w-2 bg-gradient-to-b from-orange-500 to-amber-600 shrink-0" />
               
               <div className="flex-1 p-4 md:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-6">
-                <div className="flex items-center gap-3 md:gap-6 w-full">
+                <div className="flex items-center gap-3 md:gap-6 flex-1 min-w-0 w-full">
                   <div className="h-10 w-10 md:h-14 md:w-14 rounded-xl md:rounded-2xl bg-muted flex items-center justify-center group-hover/card:bg-orange-500/10 transition-colors shrink-0">
                     <Receipt className="h-5 w-5 md:h-7 md:w-7 text-muted-foreground group-hover/card:text-orange-500 transition-colors" />
                   </div>
                   <div className="space-y-0.5 md:space-y-1 min-w-0 flex-1">
-                    <h3 className="text-base md:text-lg font-black tracking-tight truncate">{expense.description}</h3>
+                    <h3 className="text-base md:text-lg font-black tracking-tight break-words whitespace-normal leading-tight">{expense.description}</h3>
                     <div className="flex flex-wrap items-center gap-2 md:gap-4 text-[10px] md:text-xs font-medium text-muted-foreground">
-                      <span className="flex items-center gap-1">
+                      <span className="flex items-center gap-1 shrink-0">
                         <User className="h-3 w-3" />
-                        <span className="truncate max-w-[80px] md:max-w-none">{expense.paidBy?.name || "Unknown"}</span>
+                        <span className="break-words whitespace-normal max-w-[120px] md:max-w-none">{expense.paidBy?.name || "Unknown"}</span>
                       </span>
-                      <span className="flex items-center gap-1">
+                      <span className="flex items-center gap-1 shrink-0">
                         <Calendar className="h-3 w-3" />
                         {new Date(expense.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                       </span>
@@ -75,11 +75,11 @@ export function ExpenseList({
                   </div>
                 </div>
 
-                  <div className="flex items-center gap-2 md:gap-4 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 pt-3 md:pt-0 border-white/5">
-                    <div className="text-left md:text-right">
-                      <p className="text-[8px] md:text-[10px] font-black uppercase text-muted-foreground tracking-tighter">Amount</p>
-                      <p className="text-xl md:text-2xl font-black">₹{expense.amount.toFixed(2)}</p>
-                    </div>
+                <div className="flex items-center gap-2 md:gap-4 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 pt-3 md:pt-0 border-white/5 shrink-0">
+                  <div className="text-left md:text-right">
+                    <p className="text-[8px] md:text-[10px] font-black uppercase text-muted-foreground tracking-tighter">Amount</p>
+                    <p className="text-xl md:text-2xl font-black break-words">₹{expense.amount.toFixed(2)}</p>
+                  </div>
                     
                     <div className="flex items-center gap-1 md:gap-2">
                       {canEdit ? (

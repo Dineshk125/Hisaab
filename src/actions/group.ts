@@ -7,6 +7,8 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { nanoid } from "nanoid";
 
+import { sendJoinEmail, sendInviteEmail, notifyGroupActivity } from "@/lib/mail";
+
 const CreateGroupSchema = z.object({
   name: z.string().min(3, "Group name must be at least 3 characters"),
   description: z.string().optional(),
@@ -81,6 +83,23 @@ export async function createGroup(formData: z.infer<typeof CreateGroupSchema>) {
     },
   });
 
+  // Send Emails to added / invited members
+  for (const user of existingUsers) {
+    await sendJoinEmail({
+      to: user.email!,
+      groupName: name,
+      invitedBy: session.user.name || session.user.email || "Someone",
+    });
+  }
+
+  for (const email of pendingInvites) {
+    await sendInviteEmail({
+      to: email,
+      groupName: name,
+      invitedBy: session.user.name || session.user.email || "Someone",
+    });
+  }
+
   revalidatePath("/dashboard");
   return group;
 }
@@ -137,6 +156,8 @@ export async function updateGroup(groupId: string, data: { name: string; descrip
       metadata: { newName: data.name },
     },
   });
+
+  await notifyGroupActivity(groupId, "UPDATE_GROUP", { newName: data.name }, session.user.id);
 
   revalidatePath(`/groups/${groupId}`);
   return updatedGroup;
@@ -195,6 +216,8 @@ export async function joinGroupByInviteCode(code: string) {
       metadata: { method: "INVITE_CODE" }
     }
   });
+
+  await notifyGroupActivity(group.id, "JOIN_GROUP", { method: "INVITE_CODE" }, session.user.id);
 
   revalidatePath(`/groups/${group.id}`);
   revalidatePath("/dashboard");

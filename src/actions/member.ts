@@ -12,16 +12,50 @@ const AddMemberSchema = z.object({
   email: z.string().email("Invalid email address"),
 });
 
+import { sendJoinEmail, sendInviteEmail, notifyGroupActivity } from "@/lib/mail";
+
 export async function addMemberByEmail(groupId: string, email: string) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) throw new Error("Unauthorized");
+
+  const group = await prisma.group.findUnique({
+    where: { id: groupId },
+    select: { name: true, adminId: true },
+  });
+
+  if (!group) {
+    throw new Error("Group not found");
+  }
 
   const userToAdd = await prisma.user.findUnique({
     where: { email },
   });
 
   if (!userToAdd) {
-    throw new Error("User not found. Ask them to sign up first!");
+    // Member is not registered yet. Create an invitation.
+    await prisma.invitation.upsert({
+      where: {
+        email_groupId: {
+          email,
+          groupId,
+        },
+      },
+      update: {},
+      create: {
+        email,
+        groupId,
+        invitedBy: session.user.id,
+      },
+    });
+
+    await sendInviteEmail({
+      to: email,
+      groupName: group.name,
+      invitedBy: session.user.name || session.user.email || "Someone",
+    });
+
+    revalidatePath(`/groups/${groupId}`);
+    return { success: true, invited: true };
   }
 
   const existingMember = await prisma.groupMember.findUnique({
@@ -54,6 +88,19 @@ export async function addMemberByEmail(groupId: string, email: string) {
     },
   });
 
+  await sendJoinEmail({
+    to: email,
+    groupName: group.name,
+    invitedBy: session.user.name || session.user.email || "Someone",
+  });
+
+  await notifyGroupActivity(
+    groupId,
+    "ADD_MEMBER",
+    { addedBy: session.user.name, newMember: userToAdd.name },
+    session.user.id
+  );
+
   revalidatePath(`/groups/${groupId}`);
   return member;
 }
@@ -79,6 +126,17 @@ export async function removeMember(groupId: string, userId: string) {
       },
     },
   });
+
+  await prisma.activityLog.create({
+    data: {
+      groupId,
+      userId: session.user.id,
+      action: "REMOVE_MEMBER",
+      metadata: { removedUserId: userId },
+    },
+  });
+
+  await notifyGroupActivity(groupId, "REMOVE_MEMBER", { removedUserId: userId }, session.user.id);
 
   revalidatePath(`/groups/${groupId}`);
   return { success: true };
@@ -188,6 +246,8 @@ export async function claimPendingInvitations() {
         metadata: { method: "INVITATION" },
       },
     });
+
+    await notifyGroupActivity(invitation.groupId, "JOIN_GROUP", { method: "INVITATION" }, session.user.id);
   }
 
   // @ts-ignore - Prisma client needs regeneration

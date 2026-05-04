@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { pusherServer } from "@/lib/pusher";
 import { simplifyDebts } from "@/lib/settlement-engine";
+import { notifyGroupActivity } from "@/lib/mail";
 
 const ExpenseSchema = z.object({
   amount: z.number().positive(),
@@ -91,6 +92,8 @@ export async function addExpense(data: z.infer<typeof ExpenseSchema>) {
     return expense;
   });
 
+  await notifyGroupActivity(groupId, "ADD_EXPENSE", { description, amount }, paidById);
+
   try {
     await pusherServer?.trigger(`group-${groupId}`, "balance-updated", {
       message: `${session.user.name} added ₹${amount}`,
@@ -140,6 +143,8 @@ export async function updateExpense(id: string, data: z.infer<typeof ExpenseSche
     return expense;
   });
 
+  await notifyGroupActivity(groupId, "UPDATE_EXPENSE", { description, amount }, paidById);
+
   revalidatePath(`/groups/${groupId}`);
   return result;
 }
@@ -148,9 +153,19 @@ export async function deleteExpense(id: string) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) throw new Error("Unauthorized");
 
+  let groupId = "";
+  let paidById = "";
+  let description = "";
+  let amount = 0;
+
   await prisma.$transaction(async (tx) => {
     const expense = await tx.expense.findUnique({ where: { id } });
     if (!expense) throw new Error("Expense not found");
+
+    groupId = expense.groupId;
+    paidById = expense.paidById;
+    description = expense.description;
+    amount = expense.amount;
 
     await updateBalances(tx, expense.groupId, expense.paidById, expense.splits as any[], 'remove');
     await tx.expense.delete({ where: { id } });
@@ -164,6 +179,10 @@ export async function deleteExpense(id: string) {
       },
     });
   });
+
+  if (groupId) {
+    await notifyGroupActivity(groupId, "DELETE_EXPENSE", { description, amount }, paidById);
+  }
 
   revalidatePath("/dashboard");
 }
@@ -274,6 +293,13 @@ export async function approveSettlement(settlementId: string) {
       },
     });
   });
+
+  await notifyGroupActivity(
+    settlement.groupId,
+    "SETTLE",
+    { amount: settlement.amount, toUserId: settlement.toUserId, status: "APPROVED" },
+    settlement.fromUserId
+  );
 
   revalidatePath(`/groups/${settlement.groupId}`);
 }
