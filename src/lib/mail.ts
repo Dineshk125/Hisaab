@@ -78,6 +78,19 @@ export async function sendResetOTP(email: string, otp: string) {
 
 import prisma from "@/lib/prisma";
 
+function getBaseUrl() {
+  if (process.env.NEXTAUTH_URL) {
+    return process.env.NEXTAUTH_URL;
+  }
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL;
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  return "http://localhost:3000";
+}
+
 export async function sendJoinEmail({
   to,
   groupName,
@@ -87,13 +100,14 @@ export async function sendJoinEmail({
   groupName: string;
   invitedBy: string;
 }) {
+  const baseUrl = getBaseUrl();
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #000; color: #fff;">
       <h1 style="color: #f97316; text-align: center;">You've been added to ${groupName}!</h1>
       <p style="font-size: 16px; line-height: 1.5; text-align: center;">Hi there!</p>
       <p style="font-size: 16px; line-height: 1.5; text-align: center;">You have been added to the group <strong>${groupName}</strong> by <strong>${invitedBy}</strong> on Hisaab.</p>
       <div style="text-align: center; margin: 30px 0;">
-        <a href="${process.env.NEXTAUTH_URL || "http://localhost:3000"}" style="font-size: 18px; font-weight: bold; color: #fff; background-color: #f97316; padding: 12px 24px; border-radius: 8px; text-decoration: none;">Go to Dashboard</a>
+        <a href="${baseUrl}" style="font-size: 18px; font-weight: bold; color: #fff; background-color: #f97316; padding: 12px 24px; border-radius: 8px; text-decoration: none;">Go to Dashboard</a>
       </div>
       <p style="font-size: 14px; color: #888; text-align: center;">Start managing your shared expenses immediately.</p>
       <hr style="border: 0; border-top: 1px solid #333; margin: 20px 0;" />
@@ -117,6 +131,7 @@ export async function sendInviteEmail({
   groupName: string;
   invitedBy: string;
 }) {
+  const baseUrl = getBaseUrl();
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #000; color: #fff;">
       <h1 style="color: #f97316; text-align: center;">Join Hisaab & ${groupName}!</h1>
@@ -124,7 +139,7 @@ export async function sendInviteEmail({
       <p style="font-size: 16px; line-height: 1.5; text-align: center;"><strong>${invitedBy}</strong> has invited you to join their group <strong>${groupName}</strong> on Hisaab.</p>
       <p style="font-size: 16px; line-height: 1.5; text-align: center;">To join the group, please register first using the link below:</p>
       <div style="text-align: center; margin: 30px 0;">
-        <a href="${process.env.NEXTAUTH_URL || "http://localhost:3000"}/register" style="font-size: 18px; font-weight: bold; color: #fff; background-color: #f97316; padding: 12px 24px; border-radius: 8px; text-decoration: none;">Register Now</a>
+        <a href="${baseUrl}/register" style="font-size: 18px; font-weight: bold; color: #fff; background-color: #f97316; padding: 12px 24px; border-radius: 8px; text-decoration: none;">Register Now</a>
       </div>
       <p style="font-size: 14px; color: #888; text-align: center;">Once registered, you'll be automatically added to the group when you view your dashboard.</p>
       <hr style="border: 0; border-top: 1px solid #333; margin: 20px 0;" />
