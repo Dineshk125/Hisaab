@@ -93,6 +93,9 @@
     color: var(--foreground);
     @apply antialiased tracking-tight;
   }
+  button, [role="button"], a {
+    cursor: pointer !important;
+  }
 }
 
 /* Glassmorphism Classes */
