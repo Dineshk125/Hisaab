@@ -44,25 +44,19 @@ export function ExpenseList({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-3 gap-4 md:gap-6 w-full">
       {expenses.map((expense) => {
-        const canEdit = currentUser?.id === expense.paidById || 
-                        currentUser?.email === expense.paidBy?.email || 
-                        currentUser?.id === group.adminId;
-
         return (
           <Card key={expense.id} className="bento-card glass-card group/card hover:border-orange-500/30 transition-all p-0 overflow-hidden w-full rounded-none md:rounded-3xl border-x-0 md:border-x relative">
-            {canEdit && (
-              <div className="absolute top-3 right-3 flex items-center gap-1 z-20">
-                <AddExpenseDialog group={group} currentUser={currentUser} expense={expense} />
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-7 w-7 md:h-8 md:w-8 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                  onClick={() => handleDelete(expense.id)}
-                >
-                  <Trash2 className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                </Button>
-              </div>
-            )}
+            <div className="absolute top-3 right-3 flex items-center gap-1 z-20">
+              <AddExpenseDialog group={group} currentUser={currentUser} expense={expense} />
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-7 w-7 md:h-8 md:w-8 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                onClick={() => handleDelete(expense.id)}
+              >
+                <Trash2 className="h-3.5 w-3.5 md:h-4 md:w-4" />
+              </Button>
+            </div>
 
             <div className="flex flex-row min-h-[100px]">
               {/* Left Color Bar */}
